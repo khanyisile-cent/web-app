@@ -1,0 +1,50 @@
+﻿@model ResourceAndBooking.Models.Bookings
+
+@{
+    ViewData["Title"] = "Create Booking";
+}
+
+<h2>Create Booking</h2>
+
+<form asp-action="Create" method="post">
+    <div class="form-group">
+        <label asp-for="EmployeeId" class="control-label"></label>
+        <select asp-for="EmployeeId" class="form-control" asp-items="ViewBag.EmployeeID">
+            <option value="">-- Select Employee --</option>
+        </select>
+        <span asp-validation-for="EmployeeId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ResourceId" class="control-label"></label>
+        <select asp-for="ResourceId" class="form-control" asp-items="ViewBag.ResourceID">
+            <option value="">-- Select Resource --</option>
+        </select>
+        <span asp-validation-for="ResourceId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="StartTime" class="control-label"></label>
+        <input asp-for="StartTime" type="datetime-local" class="form-control" />
+        <span asp-validation-for="StartTime" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="EndTime" class="control-label"></label>
+        <input asp-for="EndTime" type="datetime-local" class="form-control" />
+        <span asp-validation-for="EndTime" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Purpose" class="control-label"></label>
+        <input asp-for="Purpose" class="form-control" />
+        <span asp-validation-for="Purpose" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button> |
+    <a asp-action="Index">Back to List</a>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

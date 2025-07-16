@@ -6,29 +6,25 @@ using ResourceAndBooking.Models;
 
 namespace ResourceAndBooking.Controllers
 {
-    public class BookingsController : Controller
+    public class BookingsController(ApplicationDbContext context) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public BookingsController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
 
         // GET: Bookings
         public async Task<IActionResult> Index()
         {
-            var bookings = _context.Bookings
+            var bookings = context.Bookings
                 .Include(b => b.Employee)
                 .Include(b => b.Resource);
 
             return View(await bookings.ToListAsync());
         }
 
-        private bool BookingExists(int id)
-        {
-            return _context.Bookings.Any(e => e.BookingId == id);
-        }
+        private bool BookingExists(int resourceId, DateTime startDate, DateTime endDate)
+        => context.Bookings.Any(b =>
+                b.ResourceId == resourceId &&
+                b.StartTime < endDate &&
+                b.EndTime > startDate);
+
 
 
         // GET: Bookings/Details/5
@@ -36,7 +32,7 @@ namespace ResourceAndBooking.Controllers
         {
             if (id == null) return NotFound();
 
-            var booking = await _context.Bookings
+            var booking = await context.Bookings
                 .Include(b => b.Employee)
                 .Include(b => b.Resource)
                 .FirstOrDefaultAsync(m => m.BookingId == id);
@@ -49,8 +45,8 @@ namespace ResourceAndBooking.Controllers
         // GET: Bookings/Create
         public IActionResult Create()
         {
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeID", "EmployeeName");
-            ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name");
+            ViewBag.EmployeeID = new SelectList(context.Employees, "EmployeeId", "Name");
+            ViewBag.ResourceID = new SelectList(context.Resources.Where(r => r.IsAvailable), "Id", "Name");
             return View();
         }
 
@@ -59,15 +55,22 @@ namespace ResourceAndBooking.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("BookingId,EmployeeId,ResourceId,StartTime,EndTime,Purpose")] Bookings booking)
         {
+            ModelState.Remove("BookedBy");
+            ModelState.Remove("Employee");
+            ModelState.Remove("Resource");
+
             if (ModelState.IsValid)
             {
-                _context.Add(booking);
-                await _context.SaveChangesAsync();
+                if (BookingExists(booking.ResourceId, booking.StartTime, booking.EndTime))
+                    return DisplayError(booking);
+
+                context.Add(booking);
+                await context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName", booking.EmployeeId);
-            ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+            ViewData["EmployeeId"] = new SelectList(context.Employees, "EmployeeId", "EmployeeName", booking.EmployeeId);
+            ViewData["ResourceId"] = new SelectList(context.Resources, "Id", "Name", booking.ResourceId);
             return View(booking);
         }
 
@@ -76,11 +79,11 @@ namespace ResourceAndBooking.Controllers
         {
             if (id == null) return NotFound();
 
-            var booking = await _context.Bookings.FindAsync(id);
+            var booking = await context.Bookings.FindAsync(id);
             if (booking == null) return NotFound();
 
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName", booking.EmployeeId);
-            ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+            ViewData["EmployeeId"] = new SelectList(context.Employees, "EmployeeId", "EmployeeName", booking.EmployeeId);
+            ViewData["ResourceId"] = new SelectList(context.Resources, "Id", "Name", booking.ResourceId);
             return View(booking);
         }
 
@@ -97,19 +100,27 @@ namespace ResourceAndBooking.Controllers
             {
                 try
                 {
-                    _context.Update(booking);
-                    await _context.SaveChangesAsync();
+                    if (BookingExists(booking.ResourceId, booking.StartTime, booking.EndTime))
+                        return DisplayError(booking);
+
+                    context.Update(booking);
+                    await context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!BookingExists(booking.BookingId)) return NotFound();
-                    else throw;
+
                 }
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName", booking.EmployeeId);
-            ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+            ViewData["EmployeeId"] = new SelectList(context.Employees, "EmployeeId", "EmployeeName", booking.EmployeeId);
+            ViewData["ResourceId"] = new SelectList(context.Resources, "Id", "Name", booking.ResourceId);
+            return View(booking);
+        }
+
+        private ActionResult DisplayError(Bookings booking)
+        {
+            ModelState.AddModelError(string.Empty, "This resource is already booked during the requested time. Please choose another slot or resource, or adjust your times.");
             return View(booking);
         }
 
@@ -118,7 +129,7 @@ namespace ResourceAndBooking.Controllers
         {
             if (id == null) return NotFound();
 
-            var booking = await _context.Bookings
+            var booking = await context.Bookings
                 .Include(b => b.Employee)
                 .Include(b => b.Resource)
                 .FirstOrDefaultAsync(m => m.BookingId == id);
@@ -133,11 +144,11 @@ namespace ResourceAndBooking.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var booking = await _context.Bookings.FindAsync(id);
+            var booking = await context.Bookings.FindAsync(id);
             if (booking != null)
             {
-                _context.Bookings.Remove(booking);
-                await _context.SaveChangesAsync();
+                context.Bookings.Remove(booking);
+                await context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
         }

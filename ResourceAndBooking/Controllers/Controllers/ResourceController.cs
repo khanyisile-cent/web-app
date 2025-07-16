@@ -36,7 +36,10 @@ namespace ResourceAndBooking.Controllers
         public IActionResult Create()
         {
 
-            return View();
+            return View(new Resource
+            {
+                IsAvailable = true
+            });
         }
 
         // POST: Resources/Create

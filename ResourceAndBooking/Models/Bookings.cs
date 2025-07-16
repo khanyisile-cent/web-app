@@ -23,13 +23,13 @@ namespace ResourceAndBooking.Models
         public DateTime EndTime { get; set; }
 
         [NotMapped]
-        public string BookedBy { get; set; } = null!;
+        public string? BookedBy { get; set; }
 
         [Required]
         public string Purpose { get; set; } = null!;
 
         // Navigation properties
-        public virtual Employee Employee { get; set; } = null!;
-        public virtual Resource Resource { get; set; } = null!;
+        public virtual Employee Employee { get; set; }
+        public virtual Resource Resource { get; set; }
     }
 }

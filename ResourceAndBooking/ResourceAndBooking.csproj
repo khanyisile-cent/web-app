@@ -14,9 +14,4 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="MacGyver">
-      <HintPath>..\..\..\CodeSpace\MSWeb\_Active\Central\MacGyver\.net 6\V4.00\MacGyver.dll</HintPath>
-    </Reference>
-  </ItemGroup>
 </Project>
